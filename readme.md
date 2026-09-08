@@ -50,15 +50,6 @@ python -m pip install -r requirements.txt
 
 ## Model Weights
 
-The trained model weights can be downloaded from the repository's **Releases** section.
-
-**Model weights:**
-[ADD GITHUB RELEASE LINK HERE]
-
-After downloading the weights, place them in the project directory as required by `04_Evaluation.ipynb`.
-
-The `weights_backup/` directory contains local backup model artifacts and is not required when retraining the model from scratch.
-
 ## Running the Notebooks
 
 Run the notebooks in this order:
@@ -123,66 +114,8 @@ The final model is selected based on validation performance.
 * Creating `validation_predictions.csv`
 * Preparing December prediction inputs
 
-## Validation Strategy
 
-A **time-based train/test split** was used instead of a random split.
 
-```text
-Training: January–August 2025
-Testing:  September–October 2025
-```
-
-The training period was used for model training and hyperparameter tuning.
-
-Within the training data, **5-fold cross-validation** was performed using `RandomizedSearchCV`.
-
-The September–October period was kept as a separate held-out test period for final evaluation.
-
-## Generate Validation Predictions
-
-The assessment requires predictions for every load in:
-
-```text
-dataset/validation.csv
-```
-
-The final prediction file is:
-
-```text
-validation_predictions.csv
-```
-
-It contains exactly:
-
-```text
-load_id,predicted_rate
-```
-
-and includes predictions for all 12,000 validation loads.
-
-## December Evaluation
-
-The December input data is:
-
-```text
-dataset/december-chart-inputs.csv
-```
-
-The December data does not contain `market_index` and `quote_signal`, which are required by the trained model.
-
-These values were therefore estimated using route/date information from the validation dataset, with date-level averages used as a fallback when an exact route/date match was unavailable.
-
-The completed December dataset is generated as:
-
-```text
-notebooks/december_completed.csv
-```
-
-The resulting prediction chart is stored in:
-
-```text
-score_results/candidate_december.png
-```
 
 ## Run the Scorer
 
