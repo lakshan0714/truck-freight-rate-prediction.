@@ -1,25 +1,258 @@
-# Freight Rate Prediction Challenge
+# Freight Rate Prediction — ML Assessment
 
-See `Freight_Rate_ML_Assessment.pdf` for the assessment instructions.
+Machine learning solution for predicting freight rates from historical truck/load data.
 
-## What to do
+See **`freight-rate-ml-assessment.pdf`** for the assessment instructions.
 
-1. Train and validate your model using `data/train_test.csv`.
-2. Predict every load in `data/validation.csv`. Each load has a unique `load_id`.
-3. Fill the matching `predicted_rate` values in `data/validation_predictions_template.csv` and save it as `validation_predictions.csv`.
-4. Predict every row in `data/december_chart_inputs.csv` by filling its `predicted_rate` column.
-5. Install the scorer requirements and run:
+
+
+## Workflow
+
+The solution is implemented in four notebooks:
+
+1. **`01_EDA.ipynb`** — Exploratory data analysis and data cleaning
+2. **`02_Feature_Engineering.ipynb`** — Feature selection and preprocessing
+3. **`03_Model_Training.ipynb`** — Model training, cross-validation and hyperparameter tuning
+4. **`04_Evaluation.ipynb`** — Validation predictions and December evaluation
+
+The final model is a **Random Forest Regressor**.
+
+## Setup
+
+Clone the repository:
+
+```bash
+git clone https://github.com/lakshan0714/truck-freight-rate-prediction..git
+cd truck-freight-rate-prediction.
+```
+
+Create a virtual environment:
+
+### Windows
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+### Linux / macOS
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+Install dependencies:
 
 ```bash
 python -m pip install -r requirements.txt
-python score.py --predictions validation_predictions.csv --december-predictions data/december_chart_inputs.csv
 ```
 
-The scorer validates both files and creates `scorer_results/candidate_december.png`.
+## Model Weights
 
-## Submit
+The trained model weights can be downloaded from the repository's **Releases** section.
 
-- GitHub repository containing your code, dependencies, and run instructions
-- `validation_predictions.csv`
-- PDF or DOCX report containing your validation, data split approach and `candidate_december.png`
-- 2-3 minute Loom link
+**Model weights:**
+[ADD GITHUB RELEASE LINK HERE]
+
+After downloading the weights, place them in the project directory as required by `04_Evaluation.ipynb`.
+
+The `weights_backup/` directory contains local backup model artifacts and is not required when retraining the model from scratch.
+
+## Running the Notebooks
+
+Run the notebooks in this order:
+
+```text
+01_EDA.ipynb
+      ↓
+02_Feature_Engineering.ipynb
+      ↓
+03_Model_Training.ipynb
+      ↓
+04_Evaluation.ipynb
+```
+
+### 1. EDA
+
+`01_EDA.ipynb` performs:
+
+* Data exploration
+* Missing-value analysis
+* Negative-value checks
+* Outlier detection
+* Data cleaning
+* Exploratory visualizations
+
+### 2. Feature Engineering
+
+`02_Feature_Engineering.ipynb` performs:
+
+* Feature selection
+* Correlation analysis
+* Random Forest feature importance
+* Feature preprocessing
+* Train/test preparation
+
+Processed datasets are saved under:
+
+```text
+dataset/processed/
+```
+
+### 3. Model Training
+
+`03_Model_Training.ipynb` performs:
+
+* Time-based train/test split
+* Feature scaling
+* Random Forest training
+* Hyperparameter tuning
+* 5-fold cross-validation
+* Model evaluation
+
+The final model is selected based on validation performance.
+
+### 4. Evaluation
+
+`04_Evaluation.ipynb` performs:
+
+* Loading the trained model
+* Processing the validation dataset
+* Generating predictions for all validation loads
+* Creating `validation_predictions.csv`
+* Preparing December prediction inputs
+
+## Validation Strategy
+
+A **time-based train/test split** was used instead of a random split.
+
+```text
+Training: January–August 2025
+Testing:  September–October 2025
+```
+
+The training period was used for model training and hyperparameter tuning.
+
+Within the training data, **5-fold cross-validation** was performed using `RandomizedSearchCV`.
+
+The September–October period was kept as a separate held-out test period for final evaluation.
+
+## Generate Validation Predictions
+
+The assessment requires predictions for every load in:
+
+```text
+dataset/validation.csv
+```
+
+The final prediction file is:
+
+```text
+validation_predictions.csv
+```
+
+It contains exactly:
+
+```text
+load_id,predicted_rate
+```
+
+and includes predictions for all 12,000 validation loads.
+
+## December Evaluation
+
+The December input data is:
+
+```text
+dataset/december-chart-inputs.csv
+```
+
+The December data does not contain `market_index` and `quote_signal`, which are required by the trained model.
+
+These values were therefore estimated using route/date information from the validation dataset, with date-level averages used as a fallback when an exact route/date match was unavailable.
+
+The completed December dataset is generated as:
+
+```text
+notebooks/december_completed.csv
+```
+
+The resulting prediction chart is stored in:
+
+```text
+score_results/candidate_december.png
+```
+
+## Run the Scorer
+
+Install the required dependencies:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+Then run:
+
+```bash
+python score.py --predictions validation_predictions.csv --december-predictions dataset/december-chart-inputs.csv
+```
+
+## Project Structure
+
+```text
+.
+├── dataset/
+│   ├── train-test.csv
+│   ├── validation.csv
+│   ├── validation-predictions-template.csv
+│   ├── december-chart-inputs.csv
+│   │
+│   └── processed/
+│       ├── cleaned_freight_data.csv
+│       ├── train_scaled.csv
+│       └── test_scaled.csv
+│
+├── notebooks/
+│   ├── 01_EDA.ipynb
+│   ├── 02_Feature_Engineering.ipynb
+│   ├── 03_Model_Training.ipynb
+│   ├── 04_Evaluation.ipynb
+│   └── december_completed.csv
+│
+├── results/
+│
+├── score_results/
+│   └── candidate_december.png
+│
+├── weights_backup/
+│
+├── freight-rate-ml-assessment.pdf
+├── requirements.txt
+├── score.py
+├── validation_predictions.csv
+├── .gitignore
+└── README.md
+```
+
+The scorer generates the required December evaluation output.
+
+## Key Technical Decisions
+
+* **Time-based validation** to better represent future freight-rate prediction.
+* **Domain-aware outlier treatment** instead of blindly removing extreme observations.
+* **Feature selection** using correlation analysis and Random Forest feature importance.
+* **StandardScaler** fitted only on the training data to avoid preprocessing leakage.
+* **Random Forest Regressor** for nonlinear relationships and feature interactions.
+* **RandomizedSearchCV with 5-fold cross-validation** for hyperparameter tuning.
+* Explicit handling of missing model features in the December evaluation.
+
+## Final Deliverables
+
+```text
+validation_predictions.csv
+```
+
+contains the required predictions for the 12,000 validation loads.
+
+The complete implementation, notebooks, preprocessing outputs, scoring script and documentation are included in this repository.
